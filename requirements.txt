@@ -1,0 +1,9 @@
+google-generativeai
+numpy
+pynput
+python-dotenv
+requests
+sounddevice
+soundfile
+torch
+transformers

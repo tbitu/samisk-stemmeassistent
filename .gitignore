@@ -1,0 +1,10 @@
+# Hemmeligheter
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtuelle miljøer
+.venv
+venv/
