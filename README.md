@@ -11,10 +11,9 @@ Dette er en Python-basert stemmeassistent som lytter til nordsamisk tale, overse
 
 ## Installasjon og bruk
 1.  Installer alle nødvendige pakker:
-    ```
     *For GPU-støtte, installer PyTorch først:*
+    ```
     pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu129
-
     pip install -r requirements.txt
     ```
 
