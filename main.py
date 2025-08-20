@@ -22,9 +22,9 @@ chat_session = genai.GenerativeModel("gemini-2.5-flash").start_chat(history=[])
 print("✅ Samisk stemmeassistent er klar.")
 
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
-pipe_speech_to_sami_text = pipeline(
+pipe_speech_to_text = pipeline(
     "automatic-speech-recognition",
-    model="NbAiLab/whisper-large-sme",
+    model="NbAiLab/nb-whisper-large",
     device=device,
     torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
 )
@@ -152,20 +152,19 @@ def translate_text(text: str, source_lang: str, target_lang: str) -> str | None:
 def process_sami_audio(audio_file_path: str):
     if not audio_file_path: return
 
-    # STEG 1 & 2: Tale -> Samisk tekst -> Norsk tekst
-    print("🗣️  Transkriberer...")
-    result = pipe_speech_to_sami_text(audio_file_path, generate_kwargs={"task": "transcribe"})
+    # STEG 1: Tale -> Norsk tekst
+    print("🗣️  Transkriberer til norsk...")
+    result = pipe_speech_to_text(
+        audio_file_path,
+        generate_kwargs={"task": "transcribe", "language": "no"}
+    )
     os.remove(audio_file_path)
-    sami_text_from_speech = result["text"]
-    if not sami_text_from_speech or not sami_text_from_speech.strip():
+    norwegian_text = result["text"]
+    if not norwegian_text or not norwegian_text.strip():
         print("Ingen gjenkjennelig tale."); return
-    print(f" Sámi: '{sami_text_from_speech}'")
-    norwegian_text = translate_text(sami_text_from_speech, "sme", "nor")
-    if not norwegian_text:
-        print("Kunne ikke oversette til norsk."); return
-    print(f"🇳🇴  Oversatt: '{norwegian_text}'")
+    print(f"🇳🇴  Gjenkjent: '{norwegian_text}'")
 
-    # STEG 3: Norsk tekst -> Gemini-svar
+    # STEG 2: Norsk tekst -> Gemini-svar
     print("🧠 Tenker...")
     try:
         prompt = f"Svar kort og på et enkelt, muntlig norsk. Svaret skal leses opp av en stemmeassistent. Spørsmål: {norwegian_text}"
@@ -174,7 +173,7 @@ def process_sami_audio(audio_file_path: str):
     except Exception as e:
         print(f"En feil oppstod med Gemini: {e}"); return
 
-    # STEG 4 & 5: Vask, oversett tilbake og generer tale
+    # STEG 3 & 4: Vask, oversett tilbake og generer tale
     cleaned_norwegian_text = clean_markdown_text(gemini_response_norwegian)
     print(f"🇳🇴: {cleaned_norwegian_text}")
     final_sami_text = translate_text(cleaned_norwegian_text, "nor", "sme")
