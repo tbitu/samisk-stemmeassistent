@@ -7,7 +7,7 @@ import numpy as np
 import sounddevice as sd
 import tempfile
 import re
-from pynput import keyboard
+# pynput er fjernet da den ikke fungerer på Wayland
 from transformers import pipeline
 from dotenv import load_dotenv
 
@@ -32,40 +32,28 @@ print(f"✅ Whisper-modell lastet inn på {device}.")
 
 SAMPLE_RATE = 16000
 CHANNELS = 1
-PTT_KEY = keyboard.Key.space
 
-# --- PTT-VARIABLER OG FUNKSJONER ---
-is_recording = False
-recorded_frames = []
+# --- NY OPPTAKSFUNKSJON FOR WAYLAND ---
+def record_audio_with_enter():
+    """
+    Starter og stopper opptak ved å trykke Enter.
+    Denne metoden er kompatibel med Wayland.
+    """
+    recorded_frames = []
 
-def on_press(key):
-    global is_recording, recorded_frames
-    if key == PTT_KEY and not is_recording:
-        print("\n" + "="*40)
-        print("🎤 Lytting startet...")
-        is_recording = True
-        recorded_frames = []
-
-def on_release(key):
-    global is_recording
-    if key == PTT_KEY and is_recording:
-        print("🛑 Lytting stoppet. Prosesserer...")
-        is_recording = False
-        return False
-    return True
-
-def record_audio_with_ptt():
-    """PTT-opptaksfunksjon."""
-    listener = keyboard.Listener(on_press=on_press, on_release=on_release)
-    listener.start()
-    print("Hold inne [MELLOMROM] for å snakke...")
-    
     def audio_callback(indata, frames, time, status):
-        if is_recording:
-            recorded_frames.append(indata.copy())
+        """Samler lyd-data fra mikrofonen."""
+        recorded_frames.append(indata.copy())
 
-    with sd.InputStream(samplerate=SAMPLE_RATE, channels=CHANNELS, callback=audio_callback):
-        listener.join()
+    # Vent til brukeren er klar
+    input("\n" + "="*40 + "\nTrykk [ENTER] for å starte opptaket...")
+    
+    # Start lydstrømmen og opptaket
+    stream = sd.InputStream(samplerate=SAMPLE_RATE, channels=CHANNELS, callback=audio_callback)
+    with stream:
+        print("🎤 Opptak har startet... Trykk [ENTER] igjen for å stoppe.")
+        input() # Vent til brukeren trykker Enter for å stoppe
+        print("🛑 Opptak stoppet. Prosesserer...")
 
     if not recorded_frames:
         print("Ingen lyd ble tatt opp.")
@@ -76,15 +64,13 @@ def record_audio_with_ptt():
     sf.write(temp_file.name, recording, SAMPLE_RATE)
     return temp_file.name
 
-# --- KJERNEFUNKSJONER ---
+
+# --- KJERNEFUNKSJONER (dine endringer er beholdt) ---
 
 def is_valid_charset(text: str) -> bool:
     """Sjekker om teksten kun inneholder gyldige norsk/samiske tegn."""
-    # Tillater a-z, norske tegn, samiske tegn, tall, og vanlig tegnsetting.
-    # Finner alle tegn som IKKE er i dette settet.
     invalid_char_pattern = r"[^a-zA-ZæøåÆØÅáčđŋšŧžÁČĐŊŠŦŽ0-9\s.,;:!?\"'()\[\]-]"
     match = re.search(invalid_char_pattern, text)
-    # Returnerer True hvis ingen ugyldige tegn ble funnet.
     return match is None
 
 def clean_markdown_text(text: str) -> str:
@@ -135,7 +121,6 @@ def translate_text(text: str, source_lang: str, target_lang: str) -> str | None:
     payload = {"text": text, "src": source_lang, "tgt": target_lang}
     headers = {"Content-Type": "application/json"}
     
-    # Løkke for å prøve opptil 2 ganger
     for attempt in range(2):
         print(f"🔄 Oversetter fra {source_lang} til {target_lang} (forsøk {attempt + 1})...")
         try:
@@ -145,24 +130,22 @@ def translate_text(text: str, source_lang: str, target_lang: str) -> str | None:
 
             if not translated_text or not isinstance(translated_text, str) or not translated_text.strip():
                 print("⚠️ Oversettelsen ga et tomt resultat.")
-                continue # Gå til neste forsøk
+                continue
 
             if not is_valid_charset(translated_text):
                 print("⚠️ Oversettelsen inneholdt ugyldige tegn. Prøver på nytt...")
-                continue # Gå til neste forsøk
-
-	    # Feiler på 'Ok.' og lignende
+                continue
+            
+            # Din endring er beholdt:
             #if translated_text.strip() == text.strip():
             #    print("⚠️ Oversettelsen returnerte input-teksten uendret.")
-            #    continue # Gå til neste forsøk
+            #    continue
             
-            # Hvis alt er OK, returner resultatet
             return translated_text
 
         except requests.exceptions.RequestException as e:
             print(f"❌ Feil med oversettelses-API: {e}")
     
-    # Hvis løkken fullføres uten et gyldig resultat
     print(f"❌ Klarte ikke å få en gyldig oversettelse for '{text}' etter 2 forsøk.")
     return None
 
@@ -193,6 +176,7 @@ def process_sami_audio(audio_file_path: str):
 
     # STEG 4 & 5: Vask, oversett tilbake og generer tale
     cleaned_norwegian_text = clean_markdown_text(gemini_response_norwegian)
+    print(f"🇳🇴: {cleaned_norwegian_text}")
     final_sami_text = translate_text(cleaned_norwegian_text, "nor", "sme")
 
     if final_sami_text:
@@ -211,7 +195,8 @@ def process_sami_audio(audio_file_path: str):
 if __name__ == "__main__":
     try:
         while True:
-            audio_file = record_audio_with_ptt()
+            # Endret til å bruke den nye Wayland-kompatible funksjonen
+            audio_file = record_audio_with_enter()
             if audio_file:
                 process_sami_audio(audio_file)
     except KeyboardInterrupt:

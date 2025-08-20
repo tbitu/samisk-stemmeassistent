@@ -7,7 +7,6 @@ Dette er en Python-basert stemmeassistent som lytter til nordsamisk tale, overse
 * **Oversettelse:** Bruker TartuNLP for oversettelse mellom samisk og norsk.
 * **AI-motor:** Bruker Google Gemini for å generere svar.
 * **Tekst-til-Tale:** Bruker Giellatekno (UiT) sin API for å generere samisk tale.
-* **Push-to-Talk:** Bruker mellomromstasten for å aktivere mikrofonen.
 
 ## Installasjon og bruk
 1.  Installer alle nødvendige pakker:
@@ -26,7 +25,7 @@ Dette er en Python-basert stemmeassistent som lytter til nordsamisk tale, overse
     python main.py
     ```
 
-4.  Hold inne mellomromstasten for å snakke.
+4.  Trykk Enter for å starte og stoppe lydopptak.
 
 
 Hvis du har en Nvidia GPU, kan du sjekke om scriptet kan bruke det med cudatest.py.
