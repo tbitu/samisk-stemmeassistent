@@ -1,6 +1,5 @@
 google-generativeai
 numpy
-pynput
 python-dotenv
 requests
 sounddevice
