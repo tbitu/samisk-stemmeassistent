@@ -1,11 +1,11 @@
 # Samisk stemmeassistent
 
-Dette er en Python-basert stemmeassistent som lytter til nordsamisk tale, oversetter det til norsk for å få et svar fra Gemini, og oversetter svaret tilbake til samisk tale.
+Dette er en Python-basert stemmeassistent som lytter til nordsamisk og norsk tale, transkriberer det automatisk til norsk tekst, benytter AI for å generere svar, oversetter svaret til samisk, og leser det opp.
 
 ## Funksjoner
-* **Tale-til-Tekst:** Bruker Nasjonalbibliotekets Whisper-modell for å transkribere samisk tale.
-* **Oversettelse:** Bruker TartuNLP for oversettelse mellom samisk og norsk.
-* **AI-motor:** Bruker Google Gemini for å generere svar.
+* **Tale-til-Tekst:** Bruker nb-whisper-large-modellen (Nasjonalbiblioteket) til å transkribere både samisk og norsk tale direkte til norsk tekst.
+* **AI-motor:** Bruker Google Gemini for å generere svar på norsk.
+* **Oversettelse:** Bruker TartuNLP for å oversette Gemini sitt norske svar til samisk.
 * **Tekst-til-Tale:** Bruker Giellatekno (UiT) sin API for å generere samisk tale.
 
 ## Installasjon og bruk
@@ -26,6 +26,5 @@ Dette er en Python-basert stemmeassistent som lytter til nordsamisk tale, overse
     ```
 
 4.  Trykk Enter for å starte og stoppe lydopptak.
-
 
 Hvis du har en Nvidia GPU, kan du sjekke om scriptet kan bruke det med cudatest.py.
